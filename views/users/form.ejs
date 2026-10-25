@@ -1,0 +1,35 @@
+<%- include('../partials/header') %>
+<div class="form-page">
+  <div class="panel">
+    <div class="panel-head"><h2><%= user ? 'Ubah Akun' : 'Akun Baru' %></h2></div>
+    <% if (errors.length) { %><div class="alert alert-danger"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
+    <form method="POST" action="<%= user ? `/users/${user.id}/edit` : '/users/baru' %>" class="form grid-form">
+      <% if (!user) { %>
+        <label>Username * <input type="text" name="username" required value="<%= (old && old.username) || '' %>"></label>
+      <% } else { %>
+        <label>Username <input type="text" value="<%= user.username %>" disabled></label>
+      <% } %>
+      <label>Nama Lengkap * <input type="text" name="full_name" required value="<%= (old && old.full_name) || (user && user.full_name) || '' %>"></label>
+      <label>Email <input type="email" name="email" value="<%= (old && old.email) || (user && user.email) || '' %>"></label>
+      <label>Peran
+        <select name="role">
+          <% ['admin','manajer','anggota'].forEach(r => { %>
+            <option value="<%= r %>" <%= ((old && old.role) || (user && user.role) || 'anggota') === r ? 'selected' : '' %>><%= r %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Password <%= user ? '(kosongkan bila tidak diganti)' : '*' %>
+        <input type="password" name="password" <%= user ? '' : 'required' %> minlength="6" autocomplete="new-password">
+      </label>
+      <label class="check">
+        <input type="checkbox" name="is_active" value="1"
+          <%= (old && old.is_active !== undefined) ? (old.is_active ? 'checked' : '') : (!user || user.is_active ? 'checked' : '') %>> Akun aktif
+      </label>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit"><%= user ? 'Simpan' : 'Buat Akun' %></button>
+        <a class="btn btn-ghost" href="/users">Batal</a>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

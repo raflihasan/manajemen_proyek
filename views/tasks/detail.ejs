@@ -1,0 +1,179 @@
+<%- include('../partials/header') %>
+<%- include('../partials/projectTabs') %>
+<p class="crumb"><a href="/projects/<%= project.id %>/tasks">← Daftar Tugas</a></p>
+
+<% if (errors && errors.length) { %><div class="alert alert-danger"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
+<% if (cpmError) { %><div class="alert alert-warning">Perhitungan jadwal belum dapat dilakukan: <%= cpmError %></div><% } %>
+
+<div class="grid-2">
+  <section class="panel">
+    <div class="panel-head">
+      <h2><%= task.name %> <% if (task.is_critical) { %><span class="badge badge-critical">kritis</span><% } %></h2>
+      <% if (canManage) { %>
+        <div class="btn-group">
+          <a class="btn btn-sm btn-secondary" href="/projects/<%= project.id %>/tasks/<%= task.id %>/edit">Edit</a>
+          <form method="POST" action="/projects/<%= project.id %>/tasks/<%= task.id %>/delete" class="inline"
+                onsubmit="return confirm('Hapus tugas ini beserta subtugas, dependensi, dan penugasan terkait?');">
+            <input type="hidden" name="konfirmasi" value="1">
+            <button class="btn btn-sm btn-danger" type="submit">Hapus</button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+    <div class="detail-grid">
+      <div><dt>Deskripsi</dt><dd><%= task.description || '-' %></dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-<%= task.status.toLowerCase().replace(' ','-') %>"><%= task.status %></span></dd></div>
+      <div><dt>Prioritas</dt><dd><span class="badge badge-<%= task.priority.toLowerCase() %>"><%= task.priority %></span></dd></div>
+      <div><dt>Mulai</dt><dd><%= task.calc_start || '-' %></dd></div>
+      <div><dt>Durasi</dt><dd><%= task.duration %> hari kerja</dd></div>
+      <div><dt>Selesai</dt><dd><%= task.calc_end || '-' %></dd></div>
+      <div><dt>Slack</dt><dd><%= task.slack === null ? '-' : task.slack + ' hari kerja' %></dd></div>
+      <div><dt>Catatan</dt><dd><%= task.notes || '-' %></dd></div>
+    </div>
+    <% if (task.conflict) { %><div class="alert alert-warning">⚠ <%= task.conflict %></div><% } %>
+    <div class="progress big"><div class="progress-bar" style="width:<%= task.progress %>%"></div></div>
+    <small class="muted">Progres: <%= task.progress %>%</small>
+
+    <form method="POST" action="/projects/<%= project.id %>/tasks/<%= task.id %>/progres" class="form row-2">
+      <label>Perbarui progres (%)
+        <input type="number" name="progress" min="0" max="100" value="<%= task.progress %>">
+      </label>
+      <label>Status
+        <select name="status">
+          <% ['Belum Dimulai','Berjalan','Terhambat','Selesai','Dibatalkan'].forEach(s => { %>
+            <option value="<%= s %>" <%= task.status === s ? 'selected' : '' %>><%= s %></option>
+          <% }) %>
+        </select>
+      </label>
+      <button class="btn btn-primary" type="submit">Simpan Progres</button>
+    </form>
+    <p class="muted">Aturan: status Selesai selalu disertai progres 100%.</p>
+  </section>
+
+  <div>
+    <section class="panel">
+      <div class="panel-head"><h2>Subtugas</h2></div>
+      <% if (!subtasks.length) { %><div class="empty">Belum ada subtugas.</div><% } %>
+      <ul class="list">
+        <% subtasks.forEach(s => { %>
+          <li>
+            <a href="/projects/<%= project.id %>/tasks/<%= s.id %>"><%= s.name %></a>
+            <span class="muted"><%= s.calc_start || '-' %> → <%= s.calc_end || '-' %></span>
+            <span class="badge badge-<%= s.status.toLowerCase().replace(' ','-') %>"><%= s.status %></span>
+            <% if (s.is_critical) { %><span class="badge badge-critical">kritis</span><% } %>
+          </li>
+        <% }) %>
+      </ul>
+      <% if (canManage) { %>
+        <a class="btn btn-sm btn-secondary" href="/projects/<%= project.id %>/tasks/baru">+ Buat Subtugas/Tugas</a>
+      <% } %>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Anggota yang Ditugaskan</h2></div>
+      <% if (!assignments.length) { %><div class="empty">Belum ada anggota pada tugas ini.</div><% } %>
+      <table class="table">
+        <tbody>
+          <% assignments.forEach(a => { %>
+            <tr>
+              <td><a href="/resources/<%= a.resource_id %>"><%= a.full_name %></a>
+                <% if (a.is_active !== 1) { %><span class="badge badge-danger">nonaktif</span><% } %></td>
+              <td><%= a.role_on_task || a.resource_role || '-' %></td>
+              <td><%= a.allocation %>%</td>
+              <td class="muted"><%= a.start_date || '-' %> → <%= a.end_date || '-' %></td>
+              <td>
+                <% if (canManage) { %>
+                <form method="POST" action="/projects/<%= project.id %>/assignments/<%= a.id %>/delete" class="inline"
+                      onsubmit="return confirm('Hapus penugasan ini?');">
+                  <button class="btn btn-xs btn-danger" type="submit">Hapus</button>
+                </form>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% if (canManage) { %>
+      <form method="POST" action="/projects/<%= project.id %>/assignments/tambah" class="form">
+        <input type="hidden" name="task_id" value="<%= task.id %>">
+        <input type="hidden" name="start_date" value="<%= task.calc_start || task.start_date || '' %>">
+        <input type="hidden" name="end_date" value="<%= task.calc_end || task.end_date || '' %>">
+        <div class="row-2">
+          <label>Anggota
+            <select name="resource_id" required>
+              <option value="">— pilih anggota —</option>
+              <% allResources.forEach(r => { %>
+                <option value="<%= r.id %>"><%= r.full_name %> (<%= r.role %><%= r.is_active !== 1 ? ', nonaktif' : '' %>)</option>
+              <% }) %>
+            </select>
+          </label>
+          <label>Alokasi (%) <input type="number" name="allocation" min="1" max="200" value="100"></label>
+        </div>
+        <div class="row-2">
+          <label>Peran pada tugas <input type="text" name="role_on_task" placeholder="mis. Koordinator"></label>
+          <label>&nbsp;<button class="btn btn-primary" type="submit">Tambahkan ke Tugas</button></label>
+        </div>
+      </form>
+      <% } %>
+      <p class="muted">Lihat seluruh penugasan beserta konfliknya di tab <a href="/projects/<%= project.id %>/assignments">Penugasan</a>.</p>
+    </section>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><h2>Ketergantungan Tugas</h2></div>
+  <% if (!deps.length) { %><div class="empty">Tugas ini belum memiliki hubungan ketergantungan.</div><% } %>
+  <table class="table">
+    <thead><tr><th>Pendahulu</th><th>Penerus</th><th>Jenis</th><th>Lag</th><th>Catatan</th><th></th></tr></thead>
+    <tbody>
+      <% deps.forEach(d => { %>
+        <tr>
+          <td><a href="/projects/<%= project.id %>/tasks/<%= d.predecessor_id %>"><%= d.pred_name %></a></td>
+          <td><a href="/projects/<%= project.id %>/tasks/<%= d.successor_id %>"><%= d.succ_name %></a></td>
+          <td><span class="badge badge-info"><%= d.type %></span></td>
+          <td><%= d.lag %> hari kerja</td>
+          <td class="muted"><%= d.notes || '-' %></td>
+          <td><% if (canManage) { %>
+            <form method="POST" action="/projects/<%= project.id %>/dependencies/<%= d.id %>/delete" class="inline"
+                  onsubmit="return confirm('Hapus hubungan dependensi ini?');">
+              <button class="btn btn-xs btn-danger" type="submit">Hapus</button>
+            </form>
+          <% } %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% if (canManage) { %>
+  <form method="POST" action="/projects/<%= project.id %>/dependencies/tambah" class="form row-3">
+    <input type="hidden" name="predecessor_id" value="<%= task.id %>">
+    <label>Tugas Penerus
+      <select name="successor_id" required>
+        <option value="">— pilih tugas —</option>
+        <% siblings.forEach(s => { %><option value="<%= s.id %>"><%= s.name %></option><% }) %>
+      </select>
+    </label>
+    <label>Jenis <select name="type"><option value="FS">FS (Finish-to-Start)</option><option value="SS">SS (Start-to-Start)</option></select></label>
+    <label>Lag (hari kerja) <input type="number" name="lag" min="0" value="0"></label>
+    <button class="btn btn-primary" type="submit">Tambah Dependensi</button>
+  </form>
+  <% } %>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><h2>Riwayat Perubahan Progres</h2></div>
+  <% if (!history.length) { %><div class="empty">Belum ada riwayat.</div><% } %>
+  <table class="table">
+    <thead><tr><th>Waktu</th><th>Oleh</th><th>Progres</th><th>Status</th></tr></thead>
+    <tbody>
+      <% history.forEach(h => { %>
+        <tr>
+          <td class="muted"><%= h.changed_at %></td>
+          <td><%= h.full_name || '-' %></td>
+          <td><%= h.old_progress === null || h.old_progress === undefined ? '-' : h.old_progress + '%' %> → <strong><%= h.new_progress %>%</strong></td>
+          <td><%= h.old_status ? h.old_status + ' → ' : '' %><strong><%= h.new_status %></strong></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+<%- include('../partials/footer') %>

@@ -1,0 +1,92 @@
+<%- include('partials/header') %>
+<%- include('partials/projectTabs') %>
+
+<% if (errors && errors.length) { %>
+  <div class="alert alert-danger"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div>
+<% } %>
+<% if (cycleDetected) { %>
+  <div class="alert alert-danger">⚠ Terdeteksi siklus dependensi. Perhitungan jadwal dihentikan sampai siklus diperbaiki.</div>
+<% } %>
+
+<div class="grid-2">
+  <section class="panel">
+    <div class="panel-head"><h2>Daftar Ketergantungan</h2></div>
+    <% if (!deps.length) { %><div class="empty">Belum ada hubungan ketergantungan. Tambahkan pada formulir di samping.</div><% } %>
+    <table class="table">
+      <thead><tr><th>Pendahulu</th><th>Penerus</th><th>Jenis</th><th>Lag</th><th>Catatan</th><th></th></tr></thead>
+      <tbody>
+        <% deps.forEach(d => { %>
+          <tr>
+            <td><a href="/projects/<%= project.id %>/tasks/<%= d.predecessor_id %>"><%= d.pred_name %></a></td>
+            <td><a href="/projects/<%= project.id %>/tasks/<%= d.successor_id %>"><%= d.succ_name %></a></td>
+            <td><span class="badge badge-info"><%= d.type %></span></td>
+            <td><%= d.lag %> hr</td>
+            <td class="muted"><%= d.notes || '-' %></td>
+            <td class="actions">
+              <% if (canManage) { %>
+              <button class="btn btn-xs btn-secondary" type="button"
+                onclick="document.getElementById('edit-<%= d.id %>').style.display = document.getElementById('edit-<%= d.id %>').style.display === 'none' ? 'block' : 'none'">Edit</button>
+              <form method="POST" action="/projects/<%= project.id %>/dependencies/<%= d.id %>/delete" class="inline"
+                    onsubmit="return confirm('Hapus hubungan dependensi ini?');">
+                <button class="btn btn-xs btn-danger" type="submit">Hapus</button>
+              </form>
+              <% } %>
+            </td>
+          </tr>
+          <% if (canManage) { %>
+          <tr id="edit-<%= d.id %>" style="display:none">
+            <td colspan="6">
+              <form method="POST" action="/projects/<%= project.id %>/dependencies/<%= d.id %>/edit" class="form row-3">
+                <label>Jenis <select name="type">
+                  <option value="FS" <%= d.type === 'FS' ? 'selected' : '' %>>FS</option>
+                  <option value="SS" <%= d.type === 'SS' ? 'selected' : '' %>>SS</option>
+                </select></label>
+                <label>Lag (hari kerja) <input type="number" name="lag" min="0" value="<%= d.lag %>"></label>
+                <label>Catatan <input type="text" name="notes" value="<%= d.notes || '' %>"></label>
+                <button class="btn btn-primary btn-sm" type="submit">Simpan</button>
+              </form>
+            </td>
+          </tr>
+          <% } %>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Tambah Ketergantungan</h2></div>
+    <p class="muted">FS: penerus mulai setelah pendahulu selesai (+ lag). SS: penerus mulai setelah pendahulu mulai (+ lag). Lag dihitung dalam hari kerja.</p>
+    <% if (canManage) { %>
+    <form method="POST" action="/projects/<%= project.id %>/dependencies/tambah" class="form">
+      <label>Tugas Pendahulu
+        <select name="predecessor_id" required>
+          <option value="">— pilih tugas —</option>
+          <% tasks.forEach(t => { %>
+            <option value="<%= t.id %>" <%= old && Number(old.predecessor_id) === t.id ? 'selected' : '' %>><%= t.name %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Tugas Penerus
+        <select name="successor_id" required>
+          <option value="">— pilih tugas —</option>
+          <% tasks.forEach(t => { %>
+            <option value="<%= t.id %>" <%= old && Number(old.successor_id) === t.id ? 'selected' : '' %>><%= t.name %></option>
+          <% }) %>
+        </select>
+      </label>
+      <div class="row-2">
+        <label>Jenis Dependensi
+          <select name="type"><option value="FS">FS — Finish to Start</option><option value="SS">SS — Start to Start</option></select>
+        </label>
+        <label>Lag (hari kerja) <input type="number" name="lag" min="0" value="<%= old && old.lag !== undefined ? old.lag : 0 %>"></label>
+      </div>
+      <label>Catatan <input type="text" name="notes" placeholder="opsional"></label>
+      <button class="btn btn-primary" type="submit">Tambah Dependensi</button>
+    </form>
+    <% } else { %>
+      <div class="alert alert-info">Anda hanya dapat melihat dependensi.</div>
+    <% } %>
+    <p class="muted">Hubungan dependensi juga ditampilkan pada <a href="/projects/<%= project.id %>/gantt">Gantt Chart</a> (panah) dan <a href="/projects/<%= project.id %>/pert">PERT Chart</a> (node &amp; panah).</p>
+  </section>
+</div>
+<%- include('partials/footer') %>

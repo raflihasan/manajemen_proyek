@@ -1,0 +1,19 @@
+{
+  "name": "sistem-informasi-manajemen-proyek-event-kampus",
+  "version": "1.0.0",
+  "description": "Sistem Informasi Manajemen Proyek Penyelenggaraan Event Kampus Berbasis Web",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "seed": "node src/db/seed.js",
+    "initdb": "node src/db/init.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0"
+  }
+}

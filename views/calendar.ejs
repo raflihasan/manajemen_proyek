@@ -1,0 +1,100 @@
+<%- include('partials/header') %>
+<%- include('partials/projectTabs') %>
+
+<% if (!canManage) { %><div class="alert alert-info">Anda memiliki akses baca terhadap kalender kerja proyek ini.</div><% } %>
+<% if (errors.length) { %><div class="alert alert-danger"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
+
+<div class="grid-2">
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Kalender <%= monthNames[month] %> <%= year %></h2>
+      <div class="btn-group">
+        <a class="btn btn-sm btn-secondary" href="?bulan=<%= prevBulan %>">‹ Bulan sebelumnya</a>
+        <a class="btn btn-sm btn-secondary" href="?bulan=<%= nextBulan %>">Bulan berikutnya ›</a>
+      </div>
+    </div>
+    <table class="calendar">
+      <thead><tr><th>Min</th><th>Sen</th><th>Sel</th><th>Rab</th><th>Kam</th><th>Jum</th><th>Sab</th></tr></thead>
+      <tbody>
+        <% for (let i = 0; i < cells.length; i += 7) { %>
+          <tr>
+            <% for (let j = 0; j < 7; j++) { const c = cells[i + j]; %>
+              <td class="<%= !c ? 'pad' : (c.isWorkday ? 'workday' : 'off') %>">
+                <% if (c) { %>
+                  <span class="daynum"><%= c.day %></span>
+                  <% if (c.holiday) { %><span class="hol"><%= c.holiday.name %></span><% } %>
+                  <% if (c.date === today) { %><span class="today-dot">•</span><% } %>
+                <% } %>
+              </td>
+            <% } %>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+    <p class="legend"><span class="sw workday"></span> hari kerja <span class="sw off"></span> hari libur/akhir pekan</p>
+  </section>
+
+  <div>
+    <% if (canManage) { %>
+    <section class="panel">
+      <div class="panel-head"><h2>Pengaturan Hari &amp; Jam Kerja</h2></div>
+      <form method="POST" action="/projects/<%= project.id %>/calendar/kerja" class="form">
+        <input type="hidden" name="bulan" value="<%= year %>-<%= String(month + 1).padStart(2, '0') %>">
+        <div class="day-checks">
+          <% const names = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']; %>
+          <% for (let d = 0; d <= 6; d++) { %>
+            <label class="check">
+              <input type="checkbox" name="day_<%= d %>" <%= ctx.workdayMap[d] !== false ? 'checked' : '' %>>
+              <%= names[d] %>
+            </label>
+          <% } %>
+        </div>
+        <div class="row-2">
+          <label>Jam kerja mulai <input type="time" name="work_start" value="<%= ctx.calendar.work_start %>"></label>
+          <label>Jam kerja selesai <input type="time" name="work_end" value="<%= ctx.calendar.work_end %>"></label>
+        </div>
+        <button class="btn btn-primary" type="submit">Simpan Pengaturan Kerja</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Tambah Hari Libur</h2></div>
+      <form method="POST" action="/projects/<%= project.id %>/calendar/libur" class="form">
+        <label>Tanggal <input type="date" name="date" required></label>
+        <label>Nama Hari Libur <input type="text" name="name" required placeholder="mis. Libur Nasional"></label>
+        <label>Jenis
+          <select name="kind"><option value="khusus">Libur khusus proyek</option><option value="nasional">Libur nasional</option></select>
+        </label>
+        <button class="btn btn-primary" type="submit">Tambah</button>
+      </form>
+    </section>
+    <% } %>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Daftar Hari Libur</h2></div>
+      <% if (!ctx.holidays.length) { %><div class="empty">Belum ada hari libur.</div><% } %>
+      <table class="table">
+        <thead><tr><th>Tanggal</th><th>Nama</th><th>Jenis</th><th></th></tr></thead>
+        <tbody>
+          <% ctx.holidays.forEach(h => { %>
+            <tr>
+              <td><%= h.date %></td><td><%= h.name %></td>
+              <td><span class="badge <%= h.kind === 'nasional' ? 'badge-info' : 'badge-sedang' %>"><%= h.kind %></span></td>
+              <td>
+                <% if (canManage) { %>
+                <form method="POST" action="/projects/<%= project.id %>/calendar/libur/<%= h.id %>/delete" class="inline"
+                      onsubmit="return confirm('Hapus hari libur ini?');">
+                  <input type="hidden" name="bulan" value="<%= year %>-<%= String(month + 1).padStart(2, '0') %>">
+                  <button class="btn btn-xs btn-danger" type="submit">Hapus</button>
+                </form>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <p class="muted">Hari libur dan akhir pekan dipertimbangkan dalam perhitungan durasi, jadwal Gantt/PERT, dan jalur kritis.</p>
+    </section>
+  </div>
+</div>
+<%- include('partials/footer') %>

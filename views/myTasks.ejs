@@ -1,0 +1,48 @@
+<%- include('partials/header') %>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Tugas yang Ditugaskan kepada Anda</h2>
+    <small class="muted">Diperbarui otomatis dari penugasan sumber daya</small>
+  </div>
+
+  <% if (!tasks.length) { %>
+    <div class="empty">Belum ada tugas yang ditugaskan kepada Anda.</div>
+  <% } else { %>
+    <div style="overflow-x:auto">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Proyek</th><th>Tugas</th><th>Peran</th><th>Alokasi</th>
+            <th>Periode</th><th>Prioritas</th><th>Status</th><th>Progres</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% tasks.forEach(t => { %>
+            <tr class="<%= t.status === 'Terhambat' ? 'row-warning' : '' %>">
+              <td><%= t.project_name %></td>
+              <td><%= t.name %><% if (t.parent_id) { %> <span class="badge">subtugas</span><% } %></td>
+              <td><%= t.role_on_task || '-' %></td>
+              <td><%= t.allocation %>%</td>
+              <td>
+                <%= t.astart || t.start_date || '?' %> → <%= t.aend || t.end_date || '?' %><br>
+                <small class="muted"><%= t.duration %> hari kerja</small>
+              </td>
+              <td><span class="badge badge-<%= String(t.priority).toLowerCase() %>"><%= t.priority %></span></td>
+              <td><span class="badge badge-<%= String(t.status).toLowerCase().replace(/ /g,'-') %>"><%= t.status %></span></td>
+              <td style="min-width:110px">
+                <div class="progress sm"><div class="progress-bar" style="width:<%= t.progress %>%"></div></div>
+                <small class="muted"><%= t.progress %>%</small>
+              </td>
+              <td class="actions">
+                <a class="btn btn-secondary btn-xs" href="/projects/<%= t.project_id %>/tasks/<%= t.id %>">Detail</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>

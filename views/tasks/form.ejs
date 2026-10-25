@@ -1,0 +1,85 @@
+<%- include('../partials/header') %>
+<div class="form-page">
+  <div class="panel">
+    <div class="panel-head"><h2><%= task ? 'Ubah Tugas' : 'Tugas Baru' %> · <%= project.name %></h2></div>
+    <% if (errors.length) { %>
+      <div class="alert alert-danger"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div>
+    <% } %>
+    <form method="POST" action="<%= task ? `/projects/${project.id}/tasks/${task.id}/edit` : `/projects/${project.id}/tasks/baru` %>" class="form grid-form">
+      <label>Nama Tugas *
+        <input type="text" name="name" required value="<%= (old && old.name) || (task && task.name) || '' %>">
+      </label>
+      <label>Deskripsi
+        <textarea name="description" rows="3"><%= (old && old.description) || (task && task.description) || '' %></textarea>
+      </label>
+      <div class="row-2">
+        <label>Tugas Induk (untuk subtugas)
+          <select name="parent_id">
+            <option value="">— Tugas induk (tingkat atas) —</option>
+            <% parents.forEach(p => { %>
+              <option value="<%= p.id %>" <%= Number((old && old.parent_id) || (task && task.parent_id) || 0) === p.id ? 'selected' : '' %>><%= p.name %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Durasi (hari kerja) *
+          <input type="number" name="duration" min="1" step="1" required
+                 value="<%= (old && old.duration) || (task && task.duration) || 1 %>">
+        </label>
+      </div>
+      <div class="row-2">
+        <label>Tanggal Mulai
+          <input type="date" name="start_date" value="<%= (old && old.start_date) || (task && task.start_date) || project.start_date %>">
+          <small class="muted">Kosongkan untuk mengikuti tanggal mulai proyek. Tanggal selesai dihitung otomatis dari durasi dan kalender kerja.</small>
+        </label>
+        <label>Tanggal Selesai (terhitung otomatis)
+          <input type="text" disabled
+            value="<%= task ? (task.end_date || 'dihitung saat disimpan') : 'dihitung saat disimpan' %>">
+        </label>
+      </div>
+      <div class="row-2">
+        <label>Prioritas
+          <select name="priority">
+            <% ['Rendah','Sedang','Tinggi','Mendesak'].forEach(p => { %>
+              <option value="<%= p %>" <%= ((old && old.priority) || (task && task.priority) || 'Sedang') === p ? 'selected' : '' %>><%= p %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Status
+          <select name="status">
+            <% ['Belum Dimulai','Berjalan','Terhambat','Selesai','Dibatalkan'].forEach(s => { %>
+              <option value="<%= s %>" <%= ((old && old.status) || (task && task.status) || 'Belum Dimulai') === s ? 'selected' : '' %>><%= s %></option>
+            <% }) %>
+          </select>
+        </label>
+      </div>
+      <label>Progres (%) — 0–100
+        <input type="number" name="progress" min="0" max="100" step="1"
+               value="<%= (old && old.progress !== undefined) || (task && task.progress) || 0 %>">
+      </label>
+      <label>Catatan
+        <textarea name="notes" rows="2"><%= (old && old.notes) || (task && task.notes) || '' %></textarea>
+      </label>
+
+      <% if (!task) { %>
+      <fieldset class="field-set">
+        <legend>Penugasan anggota (opsional)</legend>
+        <div class="check-grid">
+          <% resources.forEach(r => { %>
+            <label class="check">
+              <input type="checkbox" name="resource_ids" value="<%= r.id %>"
+                <%= (old && old.assigned && old.assigned.includes(r.id)) ? 'checked' : '' %>>
+              <%= r.full_name %> <small class="muted"><%= r.role %><%= r.is_active !== 1 ? ' (nonaktif)' : '' %></small>
+            </label>
+          <% }) %>
+        </div>
+      </fieldset>
+      <% } %>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit"><%= task ? 'Simpan Perubahan' : 'Buat Tugas' %></button>
+        <a class="btn btn-ghost" href="/projects/<%= project.id %>/tasks">Batal</a>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

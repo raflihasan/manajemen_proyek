@@ -1,0 +1,56 @@
+<%- include('partials/header') %>
+<%- include('partials/projectTabs') %>
+
+<div class="toolbar">
+  <div class="filter-bar">
+    <label class="inline-label">Skala:
+      <select id="ganttScale">
+        <option value="hari">Hari</option>
+        <option value="minggu">Minggu</option>
+        <option value="bulan">Bulan</option>
+      </select>
+    </label>
+    <label class="inline-label"><input type="checkbox" id="showDeps" checked> Tampilkan dependensi</label>
+    <span class="legend-inline"><span class="sw crit"></span> kritis <span class="sw noncrit"></span> nonkritis <span class="sw prog"></span> progres</span>
+  </div>
+  <div id="ganttStatus" class="muted">Memuat data…</div>
+</div>
+
+<div id="ganttError"></div>
+
+<div class="gantt-wrap" id="ganttWrap">
+  <div class="gantt-left" id="ganttLeft">
+    <div class="gantt-left-head">Tugas</div>
+    <div id="ganttTaskList"></div>
+  </div>
+  <div class="gantt-right" id="ganttRight">
+    <div class="gantt-header" id="ganttHeader"></div>
+    <div class="gantt-body" id="ganttBody">
+      <svg class="gantt-deps" id="ganttDeps" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="ganttBars"></div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-top:16px">
+  <section class="panel" id="taskDetailPanel">
+    <div class="panel-head"><h2>Detail Tugas</h2></div>
+    <p class="muted">Pilih batang tugas pada grafik untuk melihat detail.</p>
+    <div id="taskDetail"></div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>Informasi</h2></div>
+    <p class="muted">Batang dihitung dari tanggal mulai, durasi, ketergantungan, dan kalender kerja proyek.
+    Tugas kritis (slack 0) ditandai merah. Panah menunjukkan hubungan dependensi (garis tebal = jalur kritis).</p>
+    <% if (canManage) { %>
+      <p class="muted">Seret batang tugas untuk mengubah jadwal — perubahan divalidasi terhadap dependensi dan kalender kerja sebelum disimpan.</p>
+    <% } %>
+  </section>
+</div>
+
+<script>
+  window.GANTT_PROJECT_ID = <%= project.id %>;
+  window.GANTT_CAN_MANAGE = <%= canManage ? 'true' : 'false' %>;
+</script>
+<script src="/js/gantt.js"></script>
+<%- include('partials/footer') %>

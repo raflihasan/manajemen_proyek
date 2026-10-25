@@ -1,0 +1,99 @@
+<%- include('partials/header') %>
+<%- include('partials/projectTabs') %>
+
+<% if (globalConflicts && globalConflicts.length) { %>
+  <div class="alert alert-warning">
+    <strong>Peringatan konflik terdeteksi (<%= globalConflicts.length %>):</strong>
+    <ul><% globalConflicts.slice(0, 12).forEach(c => { %><li><%= c.message %></li><% }) %></ul>
+    <% if (globalConflicts.length > 12) { %><small>…dan <%= globalConflicts.length - 12 %> peringatan lainnya.</small><% } %>
+  </div>
+<% } else { %>
+  <div class="alert alert-success">Tidak ada konflik beban kerja pada proyek ini.</div>
+<% } %>
+
+<div class="grid-2">
+  <section class="panel">
+    <div class="panel-head"><h2>Daftar Penugasan</h2></div>
+    <% if (!assignments.length) { %><div class="empty">Belum ada penugasan.</div><% } %>
+    <table class="table">
+      <thead><tr><th>Anggota</th><th>Tugas</th><th>Peran</th><th>Alokasi</th><th>Periode</th><th></th></tr></thead>
+      <tbody>
+        <% assignments.forEach(a => { %>
+          <tr class="<%= a.conflicts.length ? 'row-warning' : '' %>">
+            <td>
+              <a href="/resources/<%= a.resource_id %>"><%= a.resource_name %></a>
+              <% if (a.resource_active !== 1) { %><span class="badge badge-danger">nonaktif</span><% } %>
+            </td>
+            <td><a href="/projects/<%= project.id %>/tasks/<%= a.task_id %>"><%= a.task_name %></a></td>
+            <td><%= a.role_on_task || '-' %></td>
+            <td><%= a.allocation %>%</td>
+            <td class="muted"><%= a.start_date || a.task_start || '-' %> → <%= a.end_date || a.task_end || '-' %></td>
+            <td class="actions">
+              <% if (canManage) { %>
+                <button class="btn btn-xs btn-secondary" type="button"
+                  onclick="var el=document.getElementById('edit-asg-<%= a.id %>'); el.style.display = el.style.display === 'none' ? 'table-row' : 'none'">Edit</button>
+                <form method="POST" action="/projects/<%= project.id %>/assignments/<%= a.id %>/delete" class="inline"
+                      onsubmit="return confirm('Hapus penugasan ini?');">
+                  <button class="btn btn-xs btn-danger" type="submit">Hapus</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+          <% if (a.conflicts.length) { %>
+            <tr class="conflict-row"><td colspan="6">
+              <% a.conflicts.forEach(c => { %><div class="warn">⚠ <%= c %></div><% }) %>
+            </td></tr>
+          <% } %>
+          <% if (canManage) { %>
+          <tr id="edit-asg-<%= a.id %>" style="display:none"><td colspan="6">
+            <form method="POST" action="/projects/<%= project.id %>/assignments/<%= a.id %>/edit" class="form row-3">
+              <label>Alokasi (%) <input type="number" name="allocation" min="1" max="200" value="<%= a.allocation %>"></label>
+              <label>Peran <input type="text" name="role_on_task" value="<%= a.role_on_task || '' %>"></label>
+              <label>Mulai <input type="date" name="start_date" value="<%= a.start_date || a.task_start || '' %>"></label>
+              <label>Selesai <input type="date" name="end_date" value="<%= a.end_date || a.task_end || '' %>"></label>
+              <button class="btn btn-primary btn-sm" type="submit">Simpan</button>
+            </form>
+          </td></tr>
+          <% } %>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Tambah Penugasan</h2></div>
+    <% if (canManage) { %>
+    <form method="POST" action="/projects/<%= project.id %>/assignments/tambah" class="form">
+      <label>Tugas
+        <select name="task_id" required>
+          <option value="">— pilih tugas —</option>
+          <% tasks.forEach(t => { %><option value="<%= t.id %>"><%= t.name %></option><% }) %>
+        </select>
+      </label>
+      <label>Anggota
+        <select name="resource_id" required>
+          <option value="">— pilih anggota —</option>
+          <% resources.forEach(r => { %><option value="<%= r.id %>"><%= r.full_name %> (<%= r.role %><%= r.is_active !== 1 ? ', nonaktif' : '' %>)</option><% }) %>
+        </select>
+      </label>
+      <div class="row-2">
+        <label>Peran pada tugas <input type="text" name="role_on_task" placeholder="mis. Koordinator"></label>
+        <label>Alokasi kerja (%) <input type="number" name="allocation" min="1" max="200" value="100"></label>
+      </div>
+      <div class="row-2">
+        <label>Tanggal mulai penugasan <input type="date" name="start_date"></label>
+        <label>Tanggal selesai penugasan <input type="date" name="end_date"></label>
+      </div>
+      <small class="muted">Kosongkan tanggal untuk mengikuti jadwal tugas. Konflik beban/ketidakhadiran akan ditampilkan sebagai peringatan tanpa mengubah jadwal.</small>
+      <button class="btn btn-primary" type="submit">Tambah Penugasan</button>
+    </form>
+    <% } else { %><div class="alert alert-info">Anda hanya dapat melihat penugasan.</div><% } %>
+
+    <div class="panel-head" style="margin-top:18px"><h2>Tautan Cepat</h2></div>
+    <ul class="list">
+      <li><a href="/projects/<%= project.id %>/resource-chart">Resource Chart — visualisasi beban kerja</a></li>
+      <li><a href="/resources">Manajemen sumber daya &amp; ketidakhadiran</a></li>
+    </ul>
+  </section>
+</div>
+<%- include('partials/footer') %>

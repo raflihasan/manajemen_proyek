@@ -1,0 +1,45 @@
+<%- include('../partials/header') %>
+<div class="form-page">
+  <div class="panel">
+    <div class="panel-head"><h2><%= resource ? 'Ubah Anggota' : 'Tambah Anggota Tim' %></h2></div>
+    <% if (errors.length) { %><div class="alert alert-danger"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
+    <form method="POST" action="<%= resource ? `/resources/${resource.id}/edit` : '/resources/baru' %>" class="form grid-form">
+      <label>Nama Lengkap *
+        <input type="text" name="full_name" required value="<%= (old && old.full_name) || (resource && resource.full_name) || '' %>">
+      </label>
+      <div class="row-2">
+        <label>Nomor Telepon <input type="text" name="phone" value="<%= (old && old.phone) || (resource && resource.phone) || '' %>"></label>
+        <label>Email <input type="email" name="email" value="<%= (old && old.email) || (resource && resource.email) || '' %>"></label>
+      </div>
+      <label>Peran / Keahlian
+        <input type="text" name="role" list="role-list" value="<%= (old && old.role) || (resource && resource.role) || '' %>">
+        <datalist id="role-list">
+          <option>Manajer Proyek</option><option>Ketua Panitia</option><option>Koordinator Acara</option>
+          <option>Koordinator Publikasi dan Dokumentasi</option><option>Koordinator Perlengkapan dan Teknis</option>
+          <option>Koordinator Konsumsi</option><option>Koordinator Registrasi Peserta</option>
+          <option>Koordinator Logistik</option><option>Koordinator Quality Control Acara</option>
+          <option>Tim Perlengkapan dan Teknis</option>
+        </datalist>
+      </label>
+      <div class="row-2">
+        <label>Gaji / Tarif Biaya
+          <input type="number" name="rate" min="0" step="1000" value="<%= (old && old.rate) || (resource && resource.rate) || 0 %>">
+        </label>
+        <label>Satuan Tarif
+          <select name="rate_unit">
+            <option value="per hari" <%= ((old && old.rate_unit) || (resource && resource.rate_unit) || 'per hari') === 'per hari' ? 'selected' : '' %>>per hari</option>
+            <option value="per bulan" <%= (old && old.rate_unit) || (resource && resource.rate_unit) === 'per bulan' ? 'selected' : '' %>>per bulan</option>
+          </select>
+        </label>
+      </div>
+      <label class="check"><input type="checkbox" name="is_active" value="1"
+        <%= (old && old.is_active !== undefined) ? (old.is_active ? 'checked' : '') : (!resource || resource.is_active === 1 ? 'checked' : '') %>> Status aktif</label>
+      <label>Catatan <textarea name="notes" rows="2"><%= (old && old.notes) || (resource && resource.notes) || '' %></textarea></label>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit"><%= resource ? 'Simpan Perubahan' : 'Tambah Anggota' %></button>
+        <a class="btn btn-ghost" href="<%= resource ? `/resources/${resource.id}` : '/resources' %>">Batal</a>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

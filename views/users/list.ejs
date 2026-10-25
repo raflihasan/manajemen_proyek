@@ -1,0 +1,23 @@
+<%- include('../partials/header') %>
+<div class="toolbar">
+  <span class="muted">Kelola akun dan hak akses pengguna.</span>
+  <a class="btn btn-primary" href="/users/baru">+ Akun Baru</a>
+</div>
+<section class="panel">
+  <table class="table">
+    <thead><tr><th>Username</th><th>Nama Lengkap</th><th>Email</th><th>Peran</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% users.forEach(u => { %>
+        <tr>
+          <td><strong><%= u.username %></strong></td>
+          <td><%= u.full_name %></td>
+          <td class="muted"><%= u.email || '-' %></td>
+          <td><span class="badge badge-<%= u.role === 'admin' ? 'info' : u.role === 'manajer' ? 'tinggi' : 'sedang' %>"><%= u.role %></span></td>
+          <td><% if (u.is_active) { %><span class="badge badge-success">aktif</span><% } else { %><span class="badge badge-danger">nonaktif</span><% } %></td>
+          <td class="actions"><a class="btn btn-xs btn-secondary" href="/users/<%= u.id %>/edit">Edit</a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+<%- include('../partials/footer') %>

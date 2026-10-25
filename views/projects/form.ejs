@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+<div class="form-page">
+  <div class="panel">
+    <div class="panel-head"><h2><%= project ? 'Ubah Proyek' : 'Proyek Baru' %></h2></div>
+    <% if (errors.length) { %>
+      <div class="alert alert-danger"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div>
+    <% } %>
+    <form method="POST" action="<%= project ? `/projects/${project.id}/edit` : '/projects/baru' %>" class="form grid-form">
+      <label>Nama Proyek *
+        <input type="text" name="name" required value="<%= (old && old.name) || (project && project.name) || '' %>">
+      </label>
+      <label>Organisasi Penyelenggara *
+        <input type="text" name="organization" required value="<%= (old && old.organization) || (project && project.organization) || '' %>">
+      </label>
+      <label>Deskripsi
+        <textarea name="description" rows="3"><%= (old && old.description) || (project && project.description) || '' %></textarea>
+      </label>
+      <label>Lokasi
+        <input type="text" name="location" value="<%= (old && old.location) || (project && project.location) || '' %>">
+      </label>
+      <div class="row-2">
+        <label>Tanggal Mulai *
+          <input type="date" name="start_date" required value="<%= (old && old.start_date) || (project && project.start_date) || today %>">
+        </label>
+        <label>Target Tanggal Selesai *
+          <input type="date" name="target_end_date" required value="<%= (old && old.target_end_date) || (project && project.target_end_date) || '' %>">
+        </label>
+      </div>
+      <div class="row-2">
+        <label>Manajer Proyek
+          <select name="manager_id">
+            <% users.forEach(u => { %>
+              <option value="<%= u.id %>"
+                <%= Number((old && old.manager_id) || (project && project.manager_id)) === u.id ? 'selected' : '' %>>
+                <%= u.full_name %> (<%= u.role %>)
+              </option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Status
+          <select name="status">
+            <% ['Perencanaan','Berjalan','Ditunda','Selesai','Dibatalkan'].forEach(s => { %>
+              <option value="<%= s %>" <%= ((old && old.status) || (project && project.status) || 'Perencanaan') === s ? 'selected' : '' %>><%= s %></option>
+            <% }) %>
+          </select>
+        </label>
+      </div>
+      <% if (project && project.actual_end_date) { %>
+        <label>Tanggal Selesai Aktual <input type="date" value="<%= project.actual_end_date %>" disabled></label>
+      <% } %>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit"><%= project ? 'Simpan Perubahan' : 'Buat Proyek' %></button>
+        <a class="btn btn-ghost" href="<%= project ? `/projects/${project.id}` : '/projects' %>">Batal</a>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

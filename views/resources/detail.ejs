@@ -1,0 +1,109 @@
+<%- include('../partials/header') %>
+<p class="crumb"><a href="/resources">← Daftar Sumber Daya</a></p>
+
+<% if (errors.length) { %><div class="alert alert-danger"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
+
+<div class="grid-2">
+  <section class="panel">
+    <div class="panel-head">
+      <h2><%= resource.full_name %>
+        <% if (resource.is_active !== 1) { %><span class="badge badge-danger">nonaktif</span><% } %>
+      </h2>
+      <% if (canManage) { %>
+      <div class="btn-group">
+        <a class="btn btn-sm btn-secondary" href="/resources/<%= resource.id %>/edit">Edit</a>
+        <form method="POST" action="/resources/<%= resource.id %>/status" class="inline">
+          <button class="btn btn-sm btn-secondary" type="submit"><%= resource.is_active === 1 ? 'Nonaktifkan' : 'Aktifkan' %></button>
+        </form>
+      </div>
+      <% } %>
+    </div>
+    <div class="detail-grid">
+      <div><dt>Peran</dt><dd><%= resource.role || '-' %></dd></div>
+      <div><dt>Telepon</dt><dd><%= resource.phone || '-' %></dd></div>
+      <div><dt>Email</dt><dd><%= resource.email || '-' %></dd></div>
+      <div><dt>Tarif</dt><dd><%= Number(resource.rate).toLocaleString('id-ID') %> <%= resource.rate_unit %></dd></div>
+      <div><dt>Catatan</dt><dd><%= resource.notes || '-' %></dd></div>
+      <div><dt>Dibuat</dt><dd><%= resource.created_at %></dd></div>
+    </div>
+
+    <% if (cost && cost.items && cost.items.length) { %>
+      <div class="panel-head" style="margin-top:14px"><h3>Estimasi Biaya Tenaga Kerja</h3></div>
+      <% cost.items.forEach(i => { %>
+        <p><strong><%= Number(i.cost).toLocaleString('id-ID') %></strong> — <%= i.resource.full_name %><br>
+        <small class="muted">Asumsi: <%= i.assumption %> · <%= i.workDays.toFixed(1) %> hari kerja alokasi</small></p>
+      <% }) %>
+      <p class="muted"><small><%= cost.assumptions %></small></p>
+    <% } %>
+
+    <div class="panel-head" style="margin-top:14px"><h3>Ketersediaan 30 Hari ke Depan</h3></div>
+    <% if (availability) { %>
+      <% if (availability.overallocatedDates && availability.overallocatedDates.length) { %>
+        <div class="alert alert-warning">⚠ Beban berlebihan pada <%= availability.overallocatedDates.slice(0,5).join(', ') %><%= availability.overallocatedDates.length > 5 ? ' …' : '' %></div>
+      <% } %>
+      <% if (availability.absenceDates && availability.absenceDates.length) { %>
+        <div class="alert alert-info">Tidak hadir pada: <%= availability.absenceDates.join(', ') %></div>
+      <% } %>
+      <% if ((!availability.overallocatedDates || !availability.overallocatedDates.length) && (!availability.absenceDates || !availability.absenceDates.length)) { %>
+        <div class="alert alert-success">Tidak ada konflik ketersediaan dalam 30 hari ke depan.</div>
+      <% } %>
+    <% } %>
+  </section>
+
+  <div>
+    <section class="panel">
+      <div class="panel-head"><h2>Tugas yang Pernah/Sedang Ditugaskan</h2></div>
+      <% if (!assignments.length) { %><div class="empty">Belum ada penugasan.</div><% } %>
+      <table class="table">
+        <thead><tr><th>Proyek</th><th>Tugas</th><th>Alokasi</th><th>Periode</th><th>Status</th></tr></thead>
+        <tbody>
+          <% assignments.forEach(a => { %>
+            <tr>
+              <td><a href="/projects/<%= a.project_id %>"><%= a.project_name %></a></td>
+              <td><a href="/projects/<%= a.project_id %>/tasks/<%= a.task_id %>"><%= a.task_name %></a></td>
+              <td><%= a.allocation %>%</td>
+              <td class="muted"><%= a.start_date || '-' %> → <%= a.end_date || '-' %></td>
+              <td><span class="badge badge-<%= a.task_status.toLowerCase().replace(' ','-') %>"><%= a.task_status %></span></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Ketidakhadiran Pribadi</h2></div>
+      <% if (!absences.length) { %><div class="empty">Belum ada data ketidakhadiran.</div><% } %>
+      <table class="table">
+        <thead><tr><th>Mulai</th><th>Selesai</th><th>Alasan</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <% absences.forEach(x => { %>
+            <tr>
+              <td><%= x.start_date %></td><td><%= x.end_date %></td>
+              <td class="muted"><%= x.reason || '-' %></td>
+              <td><span class="badge badge-<%= x.status === 'Disetujui' ? 'success' : x.status === 'Ditolak' ? 'danger' : 'sedang' %>"><%= x.status %></span></td>
+              <td><% if (canManage) { %>
+                <form method="POST" action="/resources/absen/<%= x.id %>/delete" class="inline"
+                      onsubmit="return confirm('Hapus data ketidakhadiran ini?');">
+                  <button class="btn btn-xs btn-danger" type="submit">Hapus</button>
+                </form>
+              <% } %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% if (canManage) { %>
+      <form method="POST" action="/resources/<%= resource.id %>/absen" class="form row-2">
+        <label>Mulai <input type="date" name="start_date" required></label>
+        <label>Selesai <input type="date" name="end_date" required></label>
+        <label>Alasan <input type="text" name="reason" placeholder="mis. Cuti pribadi"></label>
+        <label>Status
+          <select name="status"><option>Disetujui</option><option>Menunggu</option><option>Ditolak</option></select>
+        </label>
+        <button class="btn btn-primary" type="submit">Tambah Ketidakhadiran</button>
+      </form>
+      <% } %>
+      <p class="muted">Ketidakhadiran memengaruhi informasi ketersediaan dan peringatan konflik penugasan.</p>
+    </section>
+  </div>
+</div>
+<%- include('../partials/footer') %>

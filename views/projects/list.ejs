@@ -1,0 +1,53 @@
+<%- include('../partials/header') %>
+<div class="toolbar">
+  <form method="GET" action="/projects" class="filter-bar">
+    <input type="search" name="q" value="<%= q %>" placeholder="Cari proyek atau organisasi…">
+    <select name="status">
+      <option value="">Semua status</option>
+      <% ['Perencanaan','Berjalan','Ditunda','Selesai','Dibatalkan'].forEach(s => { %>
+        <option value="<%= s %>" <%= filterStatus === s ? 'selected' : '' %>><%= s %></option>
+      <% }) %>
+    </select>
+    <button class="btn btn-secondary" type="submit">Filter</button>
+  </form>
+  <% if (canManage) { %><a class="btn btn-primary" href="/projects/baru">+ Proyek Baru</a><% } %>
+</div>
+
+<% if (!projects.length) { %>
+  <div class="empty state-page"><p>Belum ada proyek yang cocok dengan filter.</p>
+    <% if (canManage) { %><a class="btn btn-primary" href="/projects/baru">Buat Proyek Pertama</a><% } %></div>
+<% } %>
+
+<div class="card-grid">
+  <% projects.forEach(p => { %>
+    <article class="card">
+      <div class="card-head">
+        <h3><a href="/projects/<%= p.id %>"><%= p.name %></a></h3>
+        <span class="badge badge-<%= p.status.toLowerCase().replace(' ','-') %>"><%= p.status %></span>
+      </div>
+      <p class="muted"><%= p.organization %></p>
+      <dl class="meta">
+        <div><dt>Manajer</dt><dd><%= p.manager_name || '-' %></dd></div>
+        <div><dt>Mulai</dt><dd><%= p.start_date %></dd></div>
+        <div><dt>Target</dt><dd><%= p.target_end_date %></dd></div>
+        <% if (p.est_end) { %><div><dt>Perkiraan</dt><dd><%= p.est_end %> <%= p.late ? '⚠' : '✓' %></dd></div><% } %>
+      </dl>
+      <div class="progress"><div class="progress-bar" style="width:<%= Math.round(p.progress) %>%"></div></div>
+      <div class="card-foot">
+        <small class="muted">Progres <%= Math.round(p.progress) %>%<% if (p.critical_count) { %> · <%= p.critical_count %> tugas kritis<% } %></small>
+        <div class="btn-group">
+          <a class="btn btn-sm btn-secondary" href="/projects/<%= p.id %>">Detail</a>
+          <% if (canManage) { %><a class="btn btn-sm btn-secondary" href="/projects/<%= p.id %>/edit">Edit</a><% } %>
+          <% if (user.role === 'admin') { %>
+            <form method="POST" action="/projects/<%= p.id %>/delete" class="inline"
+                  onsubmit="return confirm('Hapus proyek beserta seluruh tugas, dependensi, dan penugasannya?');">
+              <input type="hidden" name="konfirmasi" value="1">
+              <button class="btn btn-sm btn-danger" type="submit">Hapus</button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    </article>
+  <% }) %>
+</div>
+<%- include('../partials/footer') %>

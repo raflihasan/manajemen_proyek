@@ -1,0 +1,73 @@
+<%- include('../partials/header') %>
+<%- include('../partials/projectTabs') %>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2><%= project.name %></h2>
+    <div class="btn-group">
+      <% if (canManage) { %><a class="btn btn-sm btn-secondary" href="/projects/<%= project.id %>/edit">Ubah Proyek</a><% } %>
+      <a class="btn btn-sm btn-secondary" href="/projects/<%= project.id %>/report/csv">Ekspor CSV</a>
+    </div>
+  </div>
+  <div class="detail-grid">
+    <div><dt>Organisasi</dt><dd><%= project.organization %></dd></div>
+    <div><dt>Lokasi</dt><dd><%= project.location || '-' %></dd></div>
+    <div><dt>Manajer Proyek</dt><dd><%= project.manager_name || '-' %></dd></div>
+    <div><dt>Status</dt><dd><span class="badge badge-<%= project.status.toLowerCase().replace(' ','-') %>"><%= project.status %></span></dd></div>
+    <div><dt>Tanggal Mulai</dt><dd><%= project.start_date %></dd></div>
+    <div><dt>Target Selesai</dt><dd><%= project.target_end_date %></dd></div>
+    <% if (project.actual_end_date) { %><div><dt>Selesai Aktual</dt><dd><%= project.actual_end_date %></dd></div><% } %>
+    <div><dt>Dibuat</dt><dd><%= project.created_at %></dd></div>
+    <div><dt>Diperbarui</dt><dd><%= project.updated_at %></dd></div>
+  </div>
+  <p class="muted" style="margin-top:12px"><%= project.description || 'Tanpa deskripsi.' %></p>
+  <div class="progress big"><div class="progress-bar" style="width:<%= Math.round(project.progress) %>%"></div></div>
+  <small class="muted">Progres dihitung sebagai rata-rata berbobot durasi hari kerja dari seluruh tugas induk.</small>
+</section>
+
+<section class="stat-grid">
+  <div class="stat-card"><span>Total Tugas</span><strong><%= statusCounts.total %></strong></div>
+  <div class="stat-card"><span>Belum Dimulai</span><strong><%= statusCounts.belum %></strong></div>
+  <div class="stat-card"><span>Berjalan</span><strong><%= statusCounts.berjalan %></strong></div>
+  <div class="stat-card"><span>Selesai</span><strong><%= statusCounts.selesai %></strong></div>
+  <div class="stat-card"><span>Terhambat</span><strong><%= statusCounts.terhambat %></strong></div>
+  <div class="stat-card critical"><span>Tugas Kritis</span><strong><%= cpm && cpm.ok ? cpm.criticalCount : '-' %></strong></div>
+</section>
+
+<div class="grid-2">
+  <section class="panel">
+    <div class="panel-head"><h2>Analisis Jadwal</h2></div>
+    <% if (cpmError) { %>
+      <div class="alert alert-warning">Analisis belum dapat dilakukan: <%= cpmError %></div>
+    <% } else { %>
+      <dl class="meta">
+        <div><dt>Estimasi durasi proyek</dt><dd><%= workdays %> hari kerja</dd></div>
+        <div><dt>Perkiraan penyelesaian</dt><dd><strong><%= cpm.estimatedEnd %></strong></dd></div>
+        <div><dt>Target penyelesaian</dt><dd><%= project.target_end_date %></dd></div>
+        <div><dt>Status target</dt>
+          <dd><%= cpm.lateThanTarget ? '⚠ berpotensi terlambat ' + (cpm.projectDuration ? '' : '') : '✓ sesuai target' %></dd></div>
+      </dl>
+      <p class="muted">Konsisten dengan perhitungan pada Gantt Chart, PERT Chart, dan halaman Jalur Kritis.</p>
+    <% } %>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Anggota Proyek</h2></div>
+    <% if (!members.length) { %><div class="empty">Belum ada anggota.</div><% } %>
+    <ul class="list">
+      <% members.forEach(m => { %>
+        <li><strong><%= m.full_name %></strong> <span class="muted"><%= m.role %></span></li>
+      <% }) %>
+    </ul>
+    <div class="panel-head" style="margin-top:16px"><h2>Sumber Daya Terlibat</h2></div>
+    <% if (!resources.length) { %><div class="empty">Belum ada penugasan sumber daya.</div><% } %>
+    <ul class="list">
+      <% resources.forEach(r => { %>
+        <li><a href="/resources/<%= r.id %>"><%= r.full_name %></a>
+          <span class="muted"><%= r.role %></span>
+          <% if (r.is_active !== 1) { %><span class="badge badge-danger">nonaktif</span><% } %></li>
+      <% }) %>
+    </ul>
+  </section>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,95 @@
+<%- include('partials/header') %>
+<%- include('partials/projectTabs') %>
+
+<% if (!cpm || !cpm.ok) { %>
+  <div class="alert alert-danger">
+    <strong>Analisis jalur kritis belum dapat dilakukan.</strong>
+    <p><%= cpmError %></p>
+    <p class="muted">Perbaiki data tugas (durasi, dependensi) lalu muat ulang halaman ini.</p>
+  </div>
+<% } else { %>
+  <section class="stat-grid">
+    <div class="stat-card"><span>Total Estimasi Durasi</span><strong><%= cpm.projectDuration %> hari kerja</strong></div>
+    <div class="stat-card"><span>Perkiraan Penyelesaian</span><strong><%= cpm.estimatedEnd %></strong></div>
+    <div class="stat-card"><span>Target Penyelesaian</span><strong><%= cpm.targetEnd || '-' %></strong></div>
+    <div class="stat-card <%= cpm.lateThanTarget ? 'danger' : '' %>"><span>Status Target</span>
+      <strong><%= cpm.lateThanTarget ? 'Berpotensi terlambat' : 'Sesuai target' %></strong></div>
+    <div class="stat-card critical"><span>Tugas Kritis</span><strong><%= cpm.criticalCount %></strong></div>
+    <div class="stat-card"><span>Total Tugas Dianalisis</span><strong><%= cpm.tasks.length %></strong></div>
+  </section>
+
+  <% if (cpm.lateThanTarget) { %>
+    <div class="alert alert-warning">⚠ Perkiraan penyelesaian (<%= cpm.estimatedEnd %>) melewati target proyek (<%= cpm.targetEnd %>). Tugas pada jalur kritis berikut berpotensi menyebabkan keterlambatan.</div>
+  <% } %>
+
+  <% if (cpm.criticalPaths && cpm.criticalPaths.length) { %>
+  <section class="panel">
+    <div class="panel-head"><h2>Urutan Jalur Kritis</h2></div>
+    <% cpm.criticalPaths.forEach((path, i) => { %>
+      <div class="path-chain">
+        <strong>Jalur <%= i + 1 %>:</strong>
+        <% path.forEach((t, j) => { %>
+          <a href="/projects/<%= project.id %>/tasks/<%= t.id %>" class="chain-node"><%= t.name %>
+            <small>(<%= t.duration %>hr, <%= t.es %>→<%= t.ef %>)</small></a>
+          <% if (j < path.length - 1) { %><span class="chain-arrow">→</span><% } %>
+        <% }) %>
+      </div>
+    <% }) %>
+  </section>
+  <% } %>
+
+  <div class="grid-2">
+    <section class="panel">
+      <div class="panel-head"><h2>Tugas Kritis (slack = 0)</h2></div>
+      <% const crit = cpm.tasks.filter(t => t.isCritical); %>
+      <% if (!crit.length) { %><div class="empty">Tidak ada tugas kritis — jaringan memiliki kelonggaran pada seluruh tugas.</div><% } %>
+      <table class="table">
+        <thead><tr><th>Tugas</th><th>ES</th><th>EF</th><th>LS</th><th>LF</th><th>Slack</th></tr></thead>
+        <tbody>
+          <% crit.forEach(t => { %>
+            <tr class="row-critical">
+              <td><a href="/projects/<%= project.id %>/tasks/<%= t.id %>"><%= t.name %></a>
+                <% if (t.conflict) { %><div class="muted warn">⚠ <%= t.conflict %></div><% } %></td>
+              <td><%= t.es %></td><td><%= t.ef %></td><td><%= t.ls %></td><td><%= t.lf %></td>
+              <td><strong>0</strong></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Tugas Nonkritis</h2></div>
+      <% const nonCrit = cpm.tasks.filter(t => !t.isCritical); %>
+      <% if (!nonCrit.length) { %><div class="empty">Seluruh tugas berada pada jalur kritis (periksa kelengkapan data dependensi).</div><% } %>
+      <table class="table">
+        <thead><tr><th>Tugas</th><th>ES</th><th>EF</th><th>LS</th><th>LF</th><th>Slack</th></tr></thead>
+        <tbody>
+          <% nonCrit.forEach(t => { %>
+            <tr>
+              <td><a href="/projects/<%= project.id %>/tasks/<%= t.id %>"><%= t.name %></a></td>
+              <td><%= t.es %></td><td><%= t.ef %></td><td><%= t.ls %></td><td><%= t.lf %></td>
+              <td><%= t.slack %> hr</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Peringatan &amp; Ketergantungan yang Mengikat Jadwal</h2></div>
+    <ul class="list">
+      <% cpm.tasks.filter(t => t.conflict).forEach(t => { %>
+        <li class="warn">⚠ <%= t.name %>: <%= t.conflict %></li>
+      <% }) %>
+      <% if (!cpm.tasks.some(t => t.conflict)) { %><li class="muted">Tidak ada konflik jadwal/dependensi terdeteksi.</li><% } %>
+    </ul>
+    <p class="muted">Metode: <em>Forward pass</em> menghitung ES/EF dari pendahulu (FS/SS + lag pada hari kerja);
+    <em>backward pass</em> menghitung LS/LF dari target penyelesaian; total float = LS − ES pada kalender kerja proyek.
+    Tugas dengan float nol dianggap kritis. Hasil ini sama dengan yang ditampilkan pada Gantt Chart, PERT Chart, dan Laporan.</p>
+    <a class="btn btn-secondary btn-sm" href="/projects/<%= project.id %>/gantt">Lihat pada Gantt Chart</a>
+    <a class="btn btn-secondary btn-sm" href="/projects/<%= project.id %>/pert">Lihat pada PERT Chart</a>
+  </section>
+<% } %>
+<%- include('partials/footer') %>

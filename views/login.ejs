@@ -1,0 +1,29 @@
+<%- include('partials/header') %>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-head">
+      <span class="brand-icon big">◆</span>
+      <h1>SIPM Event Kampus</h1>
+      <p>Sistem Informasi Manajemen Proyek Penyelenggaraan Event Kampus</p>
+    </div>
+    <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+    <form method="POST" action="/login" class="form">
+      <label>Username atau Email
+        <input type="text" name="username" required autofocus placeholder="mis. manajer">
+      </label>
+      <label>Password
+        <input type="password" name="password" required placeholder="••••••••">
+      </label>
+      <button class="btn btn-primary btn-block" type="submit">Login</button>
+    </form>
+    <div class="demo-box">
+      <strong>Akun demo</strong>
+      <table>
+        <tr><td>admin</td><td>admin123</td><td>Admin</td></tr>
+        <tr><td>manajer</td><td>manajer123</td><td>Manajer Proyek</td></tr>
+        <tr><td>andi / sari / budi / citra</td><td>anggota123</td><td>Anggota Tim</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+<%- include('partials/footer') %>

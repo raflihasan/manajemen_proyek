@@ -1,0 +1,46 @@
+<%- include('../partials/header') %>
+<div class="toolbar">
+  <form method="GET" action="/resources" class="filter-bar">
+    <input type="search" name="q" value="<%= q %>" placeholder="Cari nama atau peran…">
+    <select name="status">
+      <option value="">Semua status</option>
+      <option value="aktif" <%= status === 'aktif' ? 'selected' : '' %>>Aktif</option>
+      <option value="nonaktif" <%= status === 'nonaktif' ? 'selected' : '' %>>Nonaktif</option>
+    </select>
+    <button class="btn btn-secondary" type="submit">Filter</button>
+  </form>
+  <% if (canManage) { %><a class="btn btn-primary" href="/resources/baru">+ Tambah Anggota</a><% } %>
+</div>
+
+<% if (!resources.length) { %><div class="empty state-page"><p>Belum ada anggota tim yang cocok.</p></div><% } %>
+
+<section class="panel">
+  <table class="table">
+    <thead><tr><th>Nama</th><th>Peran/Keahlian</th><th>Kontak</th><th>Tarif</th><th>Status</th><th>Penugasan</th><th></th></tr></thead>
+    <tbody>
+      <% resources.forEach(r => { %>
+        <tr>
+          <td><a href="/resources/<%= r.id %>"><strong><%= r.full_name %></strong></a></td>
+          <td><%= r.role || '-' %></td>
+          <td class="muted"><%= r.phone || '-' %> · <%= r.email || '-' %></td>
+          <td><%= Number(r.rate).toLocaleString('id-ID') %> <small class="muted"><%= r.rate_unit %></small></td>
+          <td>
+            <% if (r.is_active === 1) { %><span class="badge badge-success">aktif</span>
+            <% } else { %><span class="badge badge-danger">nonaktif</span><% } %>
+          </td>
+          <td><%= r.assignment_count %> tugas</td>
+          <td class="actions">
+            <a class="btn btn-xs btn-secondary" href="/resources/<%= r.id %>">Detail</a>
+            <% if (canManage) { %>
+              <a class="btn btn-xs btn-secondary" href="/resources/<%= r.id %>/edit">Edit</a>
+              <form method="POST" action="/resources/<%= r.id %>/status" class="inline">
+                <button class="btn btn-xs btn-ghost" type="submit"><%= r.is_active === 1 ? 'Nonaktifkan' : 'Aktifkan' %></button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+<%- include('../partials/footer') %>

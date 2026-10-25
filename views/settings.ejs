@@ -1,0 +1,18 @@
+<%- include('partials/header') %>
+<div class="form-page">
+  <div class="panel">
+    <div class="panel-head"><h2>Pengaturan Dasar Aplikasi</h2></div>
+    <form method="POST" action="/settings" class="form grid-form">
+      <label>Nama Aplikasi <input type="text" name="app_name" value="<%= settings.app_name %>"></label>
+      <div class="row-2">
+        <label>Jam kerja default (mulai) <input type="time" name="default_work_start" value="<%= settings.default_work_start %>"></label>
+        <label>Jam kerja default (selesai) <input type="time" name="default_work_end" value="<%= settings.default_work_end %>"></label>
+      </div>
+      <label>Durasi tugas default (hari kerja) <input type="number" name="default_duration" min="1" value="<%= settings.default_duration %>"></label>
+      <label>Teks footer <input type="text" name="footer" value="<%= settings.footer %>"></label>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Simpan Pengaturan</button></div>
+    </form>
+    <p class="muted">Catatan: jam kerja per proyek diatur pada tab Kalender masing-masing proyek.</p>
+  </div>
+</div>
+<%- include('partials/footer') %>

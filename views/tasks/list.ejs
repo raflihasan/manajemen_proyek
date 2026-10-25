@@ -1,0 +1,98 @@
+<%- include('../partials/header') %>
+<%- include('../partials/projectTabs') %>
+
+<div class="toolbar">
+  <form method="GET" action="/projects/<%= project.id %>/tasks" class="filter-bar">
+    <input type="search" name="q" value="<%= filters.q %>" placeholder="Cari tugas…">
+    <select name="status">
+      <option value="">Semua status</option>
+      <% ['Belum Dimulai','Berjalan','Terhambat','Selesai','Dibatalkan'].forEach(s => { %>
+        <option value="<%= s %>" <%= filters.status === s ? 'selected' : '' %>><%= s %></option>
+      <% }) %>
+    </select>
+    <select name="priority">
+      <option value="">Semua prioritas</option>
+      <% ['Rendah','Sedang','Tinggi','Mendesak'].forEach(s => { %>
+        <option value="<%= s %>" <%= filters.priority === s ? 'selected' : '' %>><%= s %></option>
+      <% }) %>
+    </select>
+    <select name="member">
+      <option value="">Semua anggota</option>
+      <% members.forEach(m => { %>
+        <option value="<%= m.id %>" <%= String(filters.member) === String(m.id) ? 'selected' : '' %>><%= m.full_name %></option>
+      <% }) %>
+    </select>
+    <button class="btn btn-secondary" type="submit">Terapkan</button>
+    <a class="btn btn-ghost btn-sm" href="/projects/<%= project.id %>/tasks">Reset</a>
+  </form>
+  <% if (canManage) { %><a class="btn btn-primary" href="/projects/<%= project.id %>/tasks/baru">+ Tugas Baru</a><% } %>
+</div>
+
+<% if (cpmError) { %><div class="alert alert-warning">Perhitungan jadwal belum dapat dilakukan: <%= cpmError %></div><% } %>
+
+<% const parents = tasks.filter(t => !t.parent_id); %>
+<% if (!tasks.length) { %><div class="empty state-page"><p>Belum ada tugas yang cocok dengan filter.</p></div><% } %>
+
+<section class="panel">
+  <table class="table task-table">
+    <thead>
+      <tr>
+        <th style="width:32px"></th><th>Nama Tugas</th><th>Mulai</th><th>Durasi</th><th>Selesai</th>
+        <th>Prioritas</th><th>Status</th><th>Progres</th><th>Slack</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% tasks.filter(t => !t.parent_id).forEach(t => { %>
+        <tr class="<%= t.is_critical ? 'row-critical' : '' %>">
+          <td><% if (t.is_critical) { %><span class="crit-dot" title="Tugas kritis">●</span><% } %></td>
+          <td>
+            <a href="/projects/<%= project.id %>/tasks/<%= t.id %>"><strong><%= t.name %></strong></a>
+            <% if (t.conflict) { %><div class="muted warn">⚠ <%= t.conflict %></div><% } %>
+            <% if (t.status === 'Terhambat') { %><span class="badge badge-danger">terhambat</span><% } %>
+          </td>
+          <td><%= t.calc_start || '-' %></td>
+          <td><%= t.duration %> hr</td>
+          <td><%= t.calc_end || '-' %></td>
+          <td><span class="badge badge-<%= t.priority.toLowerCase() %>"><%= t.priority %></span></td>
+          <td><span class="badge badge-<%= t.status.toLowerCase().replace(' ','-') %>"><%= t.status %></span></td>
+          <td>
+            <div class="progress sm"><div class="progress-bar" style="width:<%= t.progress %>%"></div></div>
+            <small><%= t.progress %>%</small>
+          </td>
+          <td><%= t.slack === null ? '-' : t.slack + ' hr' %></td>
+          <td class="actions">
+            <% if (canManage) { %>
+              <a class="btn btn-xs btn-secondary" href="/projects/<%= project.id %>/tasks/<%= t.id %>/edit">Edit</a>
+              <form method="POST" action="/projects/<%= project.id %>/tasks/<%= t.id %>/urutan" class="inline">
+                <input type="hidden" name="arah" value="naik"><button class="btn btn-xs btn-ghost" title="Naik">▲</button>
+              </form>
+              <form method="POST" action="/projects/<%= project.id %>/tasks/<%= t.id %>/urutan" class="inline">
+                <input type="hidden" name="arah" value="turun"><button class="btn btn-xs btn-ghost" title="Turun">▼</button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+        <% tasks.filter(s => s.parent_id === t.id).forEach(s => { %>
+          <tr class="sub-row <%= s.is_critical ? 'row-critical' : '' %>">
+            <td><% if (s.is_critical) { %><span class="crit-dot">●</span><% } %></td>
+            <td class="sub-name"><a href="/projects/<%= project.id %>/tasks/<%= s.id %>">└ <%= s.name %></a></td>
+            <td><%= s.calc_start || '-' %></td><td><%= s.duration %> hr</td><td><%= s.calc_end || '-' %></td>
+            <td><span class="badge badge-<%= s.priority.toLowerCase() %>"><%= s.priority %></span></td>
+            <td><span class="badge badge-<%= s.status.toLowerCase().replace(' ','-') %>"><%= s.status %></span></td>
+            <td><div class="progress sm"><div class="progress-bar" style="width:<%= s.progress %>%"></div></div><small><%= s.progress %>%</small></td>
+            <td><%= s.slack === null ? '-' : s.slack + ' hr' %></td>
+            <td class="actions"><% if (canManage) { %><a class="btn btn-xs btn-secondary" href="/projects/<%= project.id %>/tasks/<%= s.id %>/edit">Edit</a><% } %></td>
+          </tr>
+        <% }) %>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+
+<% if (assignments.length) { %>
+<section class="panel">
+  <div class="panel-head"><h2>Penugasan (ringkas)</h2></div>
+  <p class="muted">Setiap penugasan dapat dikelola pada tab <a href="/projects/<%= project.id %>/assignments">Penugasan</a>.</p>
+</section>
+<% } %>
+<%- include('../partials/footer') %>

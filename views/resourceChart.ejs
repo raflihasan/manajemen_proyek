@@ -1,0 +1,50 @@
+<%- include('partials/header') %>
+<%- include('partials/projectTabs') %>
+
+<div class="toolbar">
+  <form class="filter-bar" id="rcFilter">
+    <label class="inline-label">Dari <input type="date" id="rcStart" value="<%= project.start_date %>"></label>
+    <label class="inline-label">Sampai <input type="date" id="rcEnd" value="<%= cpm && cpm.ok && cpm.estimatedEnd ? cpm.estimatedEnd : project.target_end_date %>"></label>
+    <label class="inline-label">Anggota
+      <select id="rcMember"><option value="">Semua anggota</option></select>
+    </label>
+    <button class="btn btn-primary btn-sm" type="submit">Terapkan</button>
+  </form>
+  <div id="rcStatus" class="muted">Memuat data…</div>
+</div>
+
+<div id="rcError"></div>
+
+<div class="rc-legend">
+  <span class="sw rc-l0"></span> 0%
+  <span class="sw rc-l50"></span> ≤100%
+  <span class="sw rc-lover"></span> &gt;100% (kelebihan beban)
+  <span class="sw rc-labs"></span> ketidakhadiran
+  <span class="muted">· Beban = jumlah alokasi (%) seluruh penugasan aktif anggota pada hari itu.</span>
+</div>
+
+<div class="rc-wrap">
+  <div class="rc-left">
+    <div class="rc-left-head">Anggota Tim</div>
+    <div id="rcNames"></div>
+  </div>
+  <div class="rc-right" id="rcRight">
+    <div class="rc-header" id="rcHeader"></div>
+    <div class="rc-body" id="rcBody"></div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-top:16px">
+  <section class="panel">
+    <div class="panel-head"><h2>Konflik &amp; Ketersediaan</h2></div>
+    <div id="rcConflicts"><p class="muted">Memuat…</p></div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>Ringkasan Beban</h2></div>
+    <div id="rcSummary"></div>
+  </section>
+</div>
+
+<script>window.RC_PROJECT_ID = <%= project.id %>;</script>
+<script src="/js/resource-chart.js"></script>
+<%- include('partials/footer') %>

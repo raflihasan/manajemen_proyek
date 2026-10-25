@@ -1,0 +1,40 @@
+<%- include('partials/header') %>
+<%- include('partials/projectTabs') %>
+
+<div class="toolbar">
+  <div class="filter-bar">
+    <label class="inline-label"><input type="checkbox" id="showCriticalOnly"> Tandai jalur kritis tebal</label>
+    <span class="legend-inline">
+      <span class="sw edge"></span> FS <span class="sw edge ss"></span> SS (putus-putus) <span class="sw crit"></span> jalur kritis
+    </span>
+  </div>
+  <div id="pertStatus" class="muted">Memuat data…</div>
+</div>
+
+<div id="pertError"></div>
+
+<div class="pert-scroll" id="pertScroll">
+  <div class="pert-canvas" id="pertCanvas">
+    <svg class="pert-edges" id="pertEdges" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="pertNodes"></div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-top:16px">
+  <section class="panel">
+    <div class="panel-head"><h2>Detail Node</h2></div>
+    <div id="pertDetail"><p class="muted">Pilih salah satu node tugas untuk melihat detail.</p></div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>Cara Membaca</h2></div>
+    <p class="muted">Setiap node adalah tugas; panah menunjukkan arah ketergantungan dari pendahulu ke penerus.
+    Panah bergaris putus-putus berarti dependensi SS (Start-to-Start); garis penuh berarti FS (Finish-to-Start).
+    Label menunjukkan lag dalam hari kerja. Node dan panah merah menandai jalur kritis.</p>
+  </section>
+</div>
+
+<script>
+  window.PERT_PROJECT_ID = <%= project.id %>;
+</script>
+<script src="/js/pert.js"></script>
+<%- include('partials/footer') %>

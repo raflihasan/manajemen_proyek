@@ -1,0 +1,12 @@
+<nav class="tabs">
+  <a href="/projects/<%= project.id %>" class="<%= tab === 'ringkasan' ? 'active' : '' %>">Ringkasan</a>
+  <a href="/projects/<%= project.id %>/calendar" class="<%= tab === 'kalender' ? 'active' : '' %>">Kalender</a>
+  <a href="/projects/<%= project.id %>/tasks" class="<%= tab === 'tugas' ? 'active' : '' %>">Tugas</a>
+  <a href="/projects/<%= project.id %>/dependencies" class="<%= tab === 'dependensi' ? 'active' : '' %>">Dependensi</a>
+  <a href="/projects/<%= project.id %>/assignments" class="<%= tab === 'penugasan' ? 'active' : '' %>">Penugasan</a>
+  <a href="/projects/<%= project.id %>/gantt" class="<%= tab === 'gantt' ? 'active' : '' %>">Gantt Chart</a>
+  <a href="/projects/<%= project.id %>/pert" class="<%= tab === 'pert' ? 'active' : '' %>">PERT Chart</a>
+  <a href="/projects/<%= project.id %>/critical" class="<%= tab === 'kritis' ? 'active' : '' %>">Jalur Kritis</a>
+  <a href="/projects/<%= project.id %>/resource-chart" class="<%= tab === 'resource-chart' ? 'active' : '' %>">Resource Chart</a>
+  <a href="/projects/<%= project.id %>/report" class="<%= tab === 'laporan' ? 'active' : '' %>">Laporan</a>
+</nav>

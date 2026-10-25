@@ -1,0 +1,79 @@
+<%- include('partials/header') %>
+<section class="stat-grid">
+  <div class="stat-card"><span>Total Proyek</span><strong><%= stats.total %></strong></div>
+  <div class="stat-card"><span>Proyek Berjalan</span><strong><%= stats.berjalan %></strong></div>
+  <div class="stat-card"><span>Proyek Selesai</span><strong><%= stats.selesai %></strong></div>
+  <div class="stat-card"><span>Proyek Ditunda</span><strong><%= stats.ditunda %></strong></div>
+  <div class="stat-card"><span>Total Tugas</span><strong><%= taskStats.total %></strong></div>
+  <div class="stat-card"><span>Belum Dimulai</span><strong><%= taskStats.belum %></strong></div>
+  <div class="stat-card"><span>Sedang Berjalan</span><strong><%= taskStats.berjalan %></strong></div>
+  <div class="stat-card danger"><span>Tugas Terlambat</span><strong><%= overdue.length %></strong></div>
+  <div class="stat-card critical"><span>Tugas Kritis</span><strong><%= criticalTasks.length %></strong></div>
+</section>
+
+<div class="grid-2">
+  <section class="panel">
+    <div class="panel-head"><h2>Ringkasan Progres Proyek</h2></div>
+    <% if (!projects.length) { %>
+      <div class="empty">Belum ada proyek. <a href="/projects">Buat proyek pertama</a>.</div>
+    <% } %>
+    <% projects.forEach(p => { %>
+      <div class="project-row">
+        <div class="project-row-top">
+          <a href="/projects/<%= p.id %>" class="project-name"><%= p.name %></a>
+          <span class="badge badge-<%= p.status.toLowerCase().replace(' ','-') %>"><%= p.status %></span>
+        </div>
+        <div class="muted"><%= p.organization %> · <%= p.start_date %> → <%= p.target_end_date %>
+          <% if (p.est_end) { %> · perkiraan selesai <strong><%= p.est_end %></strong><% } %>
+          <% if (p.late) { %> <span class="badge badge-danger">berpotensi terlambat</span><% } %>
+        </div>
+        <div class="progress"><div class="progress-bar" style="width:<%= p.progress %>%"></div></div>
+        <small class="muted">Progres <%= Math.round(p.progress) %>%</small>
+      </div>
+    <% }) %>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Jadwal Terdekat</h2></div>
+    <% if (!upcoming.length) { %><div class="empty">Tidak ada tugas mendatang.</div><% } %>
+    <ul class="list">
+      <% upcoming.forEach(t => { %>
+        <li>
+          <a href="/projects/<%= t.project_id %>/tasks/<%= t.id %>"><%= t.name %></a>
+          <span class="muted"><%= t.project_name %> · tenggat <%= t.end_date || '-' %></span>
+          <span class="badge badge-<%= t.priority.toLowerCase() %>"><%= t.priority %></span>
+        </li>
+      <% }) %>
+    </ul>
+  </section>
+</div>
+
+<div class="grid-2">
+  <section class="panel">
+    <div class="panel-head"><h2>Tugas Kritis</h2></div>
+    <% if (!criticalTasks.length) { %><div class="empty">Tidak ada tugas kritis (atau perhitungan belum dapat dilakukan).</div><% } %>
+    <ul class="list">
+      <% criticalTasks.forEach(t => { %>
+        <li>
+          <a href="/projects/<%= t.project_id %>/tasks/<%= t.id %>"><%= t.name %></a>
+          <span class="muted"><%= t.project_name %> · <%= t.es %> → <%= t.ef %></span>
+          <span class="badge badge-critical">kritis</span>
+        </li>
+      <% }) %>
+    </ul>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>Tugas Terlambat</h2></div>
+    <% if (!overdue.length) { %><div class="empty">Tidak ada tugas terlambat. 🎉</div><% } %>
+    <ul class="list">
+      <% overdue.forEach(t => { %>
+        <li>
+          <a href="/projects/<%= t.project_id %>/tasks/<%= t.id %>"><%= t.name %></a>
+          <span class="muted"><%= t.project_name %> · tenggat <%= t.end_date %></span>
+          <span class="badge badge-danger">terlambat</span>
+        </li>
+      <% }) %>
+    </ul>
+  </section>
+</div>
+<%- include('partials/footer') %>

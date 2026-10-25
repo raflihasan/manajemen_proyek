@@ -1,0 +1,119 @@
+<%- include('partials/header') %>
+<%- include('partials/projectTabs') %>
+
+<div class="toolbar">
+  <span class="muted">Laporan dihitung langsung dari database proyek ini.</span>
+  <a class="btn btn-primary btn-sm" href="/projects/<%= project.id %>/report/csv">Ekspor CSV</a>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><h2>Informasi Proyek</h2></div>
+  <div class="detail-grid">
+    <div><dt>Nama Proyek</dt><dd><%= project.name %></dd></div>
+    <div><dt>Organisasi</dt><dd><%= project.organization %></dd></div>
+    <div><dt>Manajer Proyek</dt><dd><%= manager ? manager.full_name : '-' %></dd></div>
+    <div><dt>Status</dt><dd><span class="badge badge-<%= project.status.toLowerCase().replace(' ','-') %>"><%= project.status %></span></dd></div>
+    <div><dt>Tanggal Mulai</dt><dd><%= project.start_date %></dd></div>
+    <div><dt>Target Selesai</dt><dd><%= project.target_end_date %></dd></div>
+    <div><dt>Perkiraan Selesai</dt><dd><%= cpm && cpm.ok ? cpm.estimatedEnd : '-' %></dd></div>
+    <div><dt>Jumlah Tugas</dt><dd><%= statusCounts.total %> (selesai <%= statusCounts.selesai %>, berjalan <%= statusCounts.berjalan %>, terlambat <%= overdue.length %>)</dd></div>
+    <div><dt>Tugas Kritis</dt><dd><%= critical.length %></dd></div>
+    <div><dt>Estimasi Durasi</dt><dd><%= cpm && cpm.ok ? cpm.projectDuration + ' hari kerja' : '-' %></dd></div>
+  </div>
+  <div class="progress big"><div class="progress-bar" style="width:<%= progress %>%"></div></div>
+  <small class="muted">Progres keseluruhan: <%= progress %>% — metode rata-rata berbobot durasi hari kerja tugas induk (Σ durasi × progres ÷ Σ durasi).</small>
+</section>
+
+<div class="grid-2">
+  <section class="panel">
+    <div class="panel-head"><h2>Status Tugas</h2></div>
+    <table class="table">
+      <thead><tr><th>Status</th><th>Jumlah</th></tr></thead>
+      <tbody>
+        <tr><td>Belum Dimulai</td><td><%= statusCounts.belum %></td></tr>
+        <tr><td>Berjalan</td><td><%= statusCounts.berjalan %></td></tr>
+        <tr><td>Terhambat</td><td><%= statusCounts.terhambat %></td></tr>
+        <tr><td>Selesai</td><td><%= statusCounts.selesai %></td></tr>
+        <tr><td>Dibatalkan</td><td><%= statusCounts.batal %></td></tr>
+      </tbody>
+    </table>
+    <div class="panel-head" style="margin-top:14px"><h3>Tugas Terlambat</h3></div>
+    <% if (!overdue.length) { %><div class="empty">Tidak ada tugas terlambat.</div><% } %>
+    <ul class="list">
+      <% overdue.forEach(t => { %>
+        <li><a href="/projects/<%= project.id %>/tasks/<%= t.id %>"><%= t.name %></a>
+          <span class="muted">tenggat <%= t.end_date %></span></li>
+      <% }) %>
+    </ul>
+    <div class="panel-head" style="margin-top:14px"><h3>Jalur Kritis</h3></div>
+    <% if (!critical.length) { %><div class="empty">Tidak ada tugas kritis<%= cpm && !cpm.ok ? ' (analisis: ' + cpmError + ')' : '' %>.</div><% } %>
+    <ul class="list">
+      <% critical.slice(0, 20).forEach(t => { %>
+        <li class="warn">● <a href="/projects/<%= project.id %>/tasks/<%= t.id %>"><%= t.name %></a>
+          <span class="muted"><%= t.es %> → <%= t.ef %> · slack <%= t.slack %> hr</span></li>
+      <% }) %>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Anggota Tim &amp; Ringkasan Penugasan</h2></div>
+    <table class="table">
+      <thead><tr><th>Anggota</th><th>Tugas</th><th>Total Alokasi (%·hari)</th></tr></thead>
+      <tbody>
+        <% workload.rows.forEach(r => { %>
+          <tr class="<%= r.isOverallocated ? 'row-warning' : '' %>">
+            <td><a href="/resources/<%= r.resource.id %>"><%= r.resource.full_name %></a>
+              <small class="muted"><%= r.resource.role || '' %></small></td>
+            <td><% r.assignments.forEach((a, i) => { %><%= a.task_name %><%= i < r.assignments.length - 1 ? ', ' : '' %><% }) %>
+              <% if (!r.assignments.length) { %><span class="muted">—</span><% } %></td>
+            <td><%= Object.values(r.daily).reduce((a, b) => a + b, 0) %>
+              <% if (r.isOverallocated) { %><span class="badge badge-danger">&gt;100%/hari</span><% } %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <div class="panel-head" style="margin-top:14px"><h3>Ringkasan Konflik Beban Kerja</h3></div>
+    <% if (!workload.conflicts.length) { %><div class="alert alert-success">Tidak ada konflik beban kerja.</div><% } %>
+    <ul class="list">
+      <% workload.conflicts.slice(0, 15).forEach(c => { %><li class="warn">⚠ <%= c.message %></li><% }) %>
+    </ul>
+
+    <div class="panel-head" style="margin-top:14px"><h3>Estimasi Biaya Tenaga Kerja</h3></div>
+    <% if (cost.items && cost.items.length) { %>
+      <table class="table">
+        <thead><tr><th>Anggota</th><th>Hari Kerja Alokasi</th><th>Estimasi Biaya</th></tr></thead>
+        <tbody>
+          <% cost.items.forEach(i => { %>
+            <tr><td><%= i.resource.full_name %></td><td><%= i.workDays.toFixed(1) %></td>
+              <td><%= Number(i.cost).toLocaleString('id-ID') %></td></tr>
+          <% }) %>
+          <tr><td colspan="2"><strong>Total</strong></td><td><strong><%= Number(cost.total).toLocaleString('id-ID') %></strong></td></tr>
+        </tbody>
+      </table>
+      <p class="muted"><small><%= cost.assumptions %></small></p>
+    <% } else { %><div class="empty">Belum ada data penugasan untuk estimasi biaya.</div><% } %>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><h2>Daftar Tugas Lengkap</h2></div>
+  <table class="table">
+    <thead><tr><th>Tugas</th><th>Mulai</th><th>Durasi</th><th>Selesai</th><th>Prioritas</th><th>Status</th><th>Progres</th><th>Kritis</th></tr></thead>
+    <tbody>
+      <% tasks.forEach(t => { const c = cpmMap[t.id]; %>
+        <tr class="<%= c && c.isCritical ? 'row-critical' : '' %>">
+          <td style="<%= t.parent_id ? 'padding-left:22px' : '' %>"><%= t.parent_id ? '└ ' : '' %><a href="/projects/<%= project.id %>/tasks/<%= t.id %>"><%= t.name %></a></td>
+          <td><%= c ? c.es : (t.start_date || '-') %></td>
+          <td><%= t.duration %> hr</td>
+          <td><%= c ? c.ef : (t.end_date || '-') %></td>
+          <td><span class="badge badge-<%= t.priority.toLowerCase() %>"><%= t.priority %></span></td>
+          <td><span class="badge badge-<%= t.status.toLowerCase().replace(' ','-') %>"><%= t.status %></span></td>
+          <td><%= t.progress %>%</td>
+          <td><%= c ? (c.isCritical ? '●' : '—') : '-' %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+<%- include('partials/footer') %>
